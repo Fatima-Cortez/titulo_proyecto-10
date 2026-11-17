@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Títulos Académicos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f7f9fc;
+            padding: 30px 15px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #34495e;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        input, select {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            border-color: #a2d2ff;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .multi-var-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .multi-var-row input {
+            flex: 1;
+        }
+        .btn-add-var {
+            background-color: #fef08a;
+            color: #713f12;
+            border: 1px solid #fde047;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            align-self: flex-start;
+            margin-top: 4px;
+            transition: all 0.2s;
+        }
+        .btn-add-var:hover {
+            background-color: #fde047;
+        }
+        .btn-remove-var {
+            background-color: #fecdd3;
+            color: #881337;
+            border: 1px solid #fda4af;
+            padding: 10px 13px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-remove-var:hover {
+            background-color: #fda4af;
+        }
+        .btn-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+        .btn-main {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-generate {
+            background-color: #bde0fe;
+            color: #1d3557;
+            border: 1px solid #a2d2ff;
+        }
+        .btn-generate:hover {
+            background-color: #a2d2ff;
+            transform: translateY(-1px);
+        }
+        .btn-copy {
+            background-color: #caffbf;
+            color: #1b4332;
+            border: 1px solid #b5f4a8;
+        }
+        .btn-copy:hover {
+            background-color: #b5f4a8;
+            transform: translateY(-1px);
+        }
+        .result-box {
+            background-color: #f1f8fe;
+            border-left: 5px solid #a2d2ff;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result-box h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .title-output {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e293b;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .word-count {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Generador de Títulos Académicos</h2>
+
+    <form id="title-form" onsubmit="generarTitulo(event)">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="tipoEstudio">Tipo de Análisis:</label>
+                <select id="tipoEstudio" onchange="cambiarTipoEstudio(); generarTitulo(event);">
+                    <option value="bivariado">Bivariado (2 Variables)</option>
+                    <option value="multivariado">Multivariado (Múltiples Variables)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="alcance">Alcance de la Investigación:</label>
+                <select id="alcance" onchange="actualizarConectores(); generarTitulo(event);">
+                    <option value="correlacional">Correlacional (Relación / Asociación)</option>
+                    <option value="explicativo">Explicativo / Causal (Influencia / Impacto)</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width" id="grupo-conector">
+                <label for="conector">Conector entre Variables:</label>
+                <select id="conector" onchange="generarTitulo(event)">
+                    <!-- Se llena dinámicamente -->
+                </select>
+            </div>
+
+            <!-- Variables Independientes -->
+            <div class="form-group full-width">
+                <label id="label-v1">Variable 1 (VI / Principal):</label>
+                <div id="vi-container">
+                    <div class="multi-var-row">
+                        <input type="text" class="vi-input" placeholder="Ej. Gestión administrativa" required>
+                    </div>
+                </div>
+                <button type="button" id="btn-add-vi" class="btn-add-var" style="display: none;" onclick="agregarCampoVariable()">
+                    + Agregar otra variable independiente
+                </button>
+            </div>
+
+            <!-- Variable Dependiente -->
+            <div class="form-group full-width" id="grupo-v2">
+                <label for="v2" id="label-v2">Variable 2 (VD / Secundaria):</label>
+                <input type="text" id="v2" placeholder="Ej. Desempeño laboral" required>
+            </div>
+
+            <div class="form-group">
+                <label for="poblacion">Población / Sujetos de estudio:</label>
+                <input type="text" id="poblacion" placeholder="Ej. colaboradores" required>
+            </div>
+
+            <div class="form-group">
+                <label for="organizacion">Organización / Entidad:</label>
+                <input type="text" id="organizacion" placeholder="Ej. empresa Alpha S.A.C." required>
+            </div>
+
+            <div class="form-group">
+                <label for="lugar">Lugar / Ubicación (opcional si la entidad lo incluye):</label>
+                <input type="text" id="lugar" placeholder="Ej. Huaraz">
+            </div>
+
+            <div class="form-group">
+                <label for="anio">Año:</label>
+                <input type="text" id="anio" placeholder="Ej. 2026" required>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button type="submit" class="btn-main btn-generate">Generar Título</button>
+            <button type="button" class="btn-main btn-copy" onclick="copiarTitulo()">Copiar Título</button>
+        </div>
+    </form>
+
+    <div class="result-box" id="result-box">
+        <h3>Título Generado:</h3>
+        <p class="title-output" id="title-output"></p>
+        <p class="word-count" id="word-count"></p>
+    </div>
+</div>
+
+<script>
+    function cambiarTipoEstudio() {
+        const tipoEstudio = document.getElementById('tipoEstudio').value;
+        const labelV1 = document.getElementById('label-v1');
+        const labelV2 = document.getElementById('label-v2');
+        const btnAddVi = document.getElementById('btn-add-vi');
+        const viContainer = document.getElementById('vi-container');
+
+        if (tipoEstudio === 'multivariado') {
+            labelV1.textContent = "Variables Independientes (VI 1, VI 2...):";
+            labelV2.textContent = "Variable Dependiente (VD / Resultado):";
+            document.getElementById('v2').placeholder = "Ej. Satisfacción laboral";
+            btnAddVi.style.display = 'inline-block';
+
+            if (viContainer.children.length === 1) {
+                viContainer.children[0].querySelector('input').placeholder = "Variable 1 (Ej. Cultura organizacional)";
+                agregarCampoVariable("Variable 2 (Ej. Liderazgo transformacional)");
+            }
+        } else {
+            labelV1.textContent = "Variable 1 (VI / Principal):";
+            labelV2.textContent = "Variable 2 (VD / Secundaria):";
+            document.getElementById('v2').placeholder = "Ej. Desempeño laboral";
+            btnAddVi.style.display = 'none';
+
+            while (viContainer.children.length > 1) {
+                viContainer.removeChild(viContainer.lastChild);
+            }
+            viContainer.children[0].querySelector('input').placeholder = "Ej. Gestión administrativa";
+        }
+        actualizarConectores();
+    }
+
+    function agregarCampoVariable(placeholderText = "") {
+        const viContainer = document.getElementById('vi-container');
+        const num = viContainer.children.length + 1;
+        const ph = placeholderText || `Variable ${num} (Ej. Clima laboral)`;
+
+        const row = document.createElement('div');
+        row.className = 'multi-var-row';
+        row.innerHTML = `
+            <input type="text" class="vi-input" placeholder="${ph}" required>
+            <button type="button" class="btn-remove-var" onclick="eliminarCampoVariable(this)" title="Quitar variable">✕</button>
+        `;
+        viContainer.appendChild(row);
+    }
+
+    function eliminarCampoVariable(btn) {
+        const viContainer = document.getElementById('vi-container');
+        if (viContainer.children.length > 2) {
+            btn.parentElement.remove();
+            generarTitulo();
+        } else {
+            alert("Un estudio multivariado requiere al menos 2 variables independientes.");
+        }
+    }
+
+    function actualizarConectores() {
+        const alcance = document.getElementById('alcance').value;
+        const selectConector = document.getElementById('conector');
+
+        selectConector.innerHTML = '';
+
+        if (alcance === 'correlacional') {
+            const opciones = [
+                { val: 'y su relación con', text: 'y su relación con' },
+                { val: 'asociado a', text: 'asociado a' },
+                { val: 'y', text: 'y' }
+            ];
+            opciones.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op.val;
+                opt.textContent = op.text;
+                selectConector.appendChild(opt);
+            });
+        } else if (alcance === 'explicativo') {
+            const opciones = [
+                { val: 'y su influencia en', text: 'y su influencia en' },
+                { val: 'y su incidencia en', text: 'y su incidencia en' },
+                { val: 'y su impacto en', text: 'y su impacto en' }
+            ];
+            opciones.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op.val;
+                opt.textContent = op.text;
+                selectConector.appendChild(opt);
+            });
+        }
+    }
+
+    function limpiarTexto(texto) {
+        if (!texto) return '';
+        return texto.trim().replace(/\.+$/, '');
+    }
+
+    function normalizar(texto) {
+        return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function obtenerArticulo(palabra) {
+        const norm = normalizar(palabra.trim());
+        const primeraPalabra = norm.split(' ')[0];
+
+        if (primeraPalabra.endsWith('es') || primeraPalabra.endsWith('os')) return 'los';
+        if (primeraPalabra.endsWith('as')) return 'las';
+
+        const excepcionesMasculinas = ['clima', 'problema', 'sistema', 'mapa', 'tema', 'programa'];
+        const excepcionesFemeninas = ['foto', 'mano', 'radio'];
+
+        if (excepcionesMasculinas.includes(primeraPalabra)) return 'el';
+        if (excepcionesFemeninas.includes(primeraPalabra)) return 'la';
+
+        if (primeraPalabra.endsWith('a') || primeraPalabra.endsWith('cion') || primeraPalabra.endsWith('sion') || primeraPalabra.endsWith('dad') || primeraPalabra.endsWith('tud')) {
+            return 'la';
+        }
+        return 'el';
+    }
+
+    function asegurarArticulo(texto) {
+        if (!texto) return '';
+        const norm = normalizar(texto);
+        const articulosExistentes = ['el ', 'la ', 'los ', 'las ', 'un ', 'una ', 'unos ', 'unas ', 'del ', 'de el '];
+        
+        if (articulosExistentes.some(art => norm.startsWith(art))) {
+            return texto;
+        }
+
+        const articulo = obtenerArticulo(texto);
+        return `${articulo} ${texto}`;
+    }
+
+    function unirVariablesIndependientes(listaInputs) {
+        const variablesFormateadas = listaInputs
+            .map(input => limpiarTexto(input.value))
+            .filter(val => val !== '')
+            .map(val => asegurarArticulo(val));
+
+        if (variablesFormateadas.length === 0) return '';
+        if (variablesFormateadas.length === 1) return variablesFormateadas[0];
+
+        const ultima = variablesFormateadas.pop();
+        const primeras = variablesFormateadas.join(', ');
+        
+        const ultimaNorm = normalizar(ultima);
+        const conjuncion = (ultimaNorm.startsWith('i') || ultimaNorm.startsWith('hi')) && !ultimaNorm.startsWith('hie') ? ' e ' : ' y ';
+
+        return `${primeras}${conjuncion}${ultima}`;
+    }
+
+    function generarTitulo(event) {
+        if (event) event.preventDefault();
+
+        const conector = document.getElementById('conector').value;
+        const inputsVi = Array.from(document.querySelectorAll('.vi-input'));
+        
+        const bloqueVi = unirVariablesIndependientes(inputsVi);
+        const v2Raw = limpiarTexto(document.getElementById('v2').value);
+        const poblacionRaw = limpiarTexto(document.getElementById('poblacion').value);
+        const organizacionRaw = limpiarTexto(document.getElementById('organizacion').value);
+        const lugar = limpiarTexto(document.getElementById('lugar').value);
+        const anio = limpiarTexto(document.getElementById('anio').value);
+
+        if (!bloqueVi || !v2Raw || !poblacionRaw || !organizacionRaw || !anio) return;
+
+        const v2 = asegurarArticulo(v2Raw);
+        const poblacion = asegurarArticulo(poblacionRaw);
+        const organizacion = asegurarArticulo(organizacionRaw);
+
+        // --- OPTIMIZACIÓN DE CONECTORES PARA EVITAR REDUNDANCIAS ---
+        // Se limpian preposiciones duplicadas o cadenas como "de el" / "en en"
+        let conectorPoblacion = ' de ';
+        if (normalizar(poblacion).startsWith('el ')) conectorPoblacion = ' del ';
+
+        let conectorOrg = ' de ';
+        if (normalizar(organizacion).startsWith('el ')) conectorOrg = ' del ';
+
+        const pobNorm = normalizar(poblacion);
+        if (pobNorm.startsWith('de ') || pobNorm.startsWith('del ') || pobNorm.startsWith('en ')) {
+            conectorPoblacion = ' ';
+        }
+
+        const orgNorm = normalizar(organizacion);
+        if (orgNorm.startsWith('de ') || orgNorm.startsWith('del ') || orgNorm.startsWith('en ')) {
+            conectorOrg = ' ';
+        }
+
+        let lugarTexto = '';
+        if (lugar) {
+            const lugarNorm = normalizar(lugar);
+            if (!orgNorm.includes(lugarNorm)) {
+                lugarTexto = (lugarNorm.startsWith('en ') || lugarNorm.startsWith('de ')) ? ` ${lugar}` : `, ${lugar}`;
+            }
+        }
+
+        let poblacionFinal = poblacion;
+        if (conectorPoblacion === ' del ') poblacionFinal = poblacion.replace(/^[Ee]l\s+/, '');
+
+        let organizacionFinal = organizacion;
+        if (conectorOrg === ' del ') organizacionFinal = organizacion.replace(/^[Ee]l\s+/, '');
+
+        // Construcción limpia y fluida de la estructura del título
+        const v2Texto = ` ${conector} ${v2}`;
+        let estructuraBase = `${bloqueVi}${v2Texto}${conectorPoblacion}${poblacionFinal}${conectorOrg}${organizacionFinal}${lugarTexto}`;
+
+        // Limpieza profunda por si quedan espacios dobles o preposiciones repetidas
+        estructuraBase = estructuraBase
+            .replace(/\s+de\s+de\s+/gi, ' de ')
+            .replace(/\s+en\s+en\s+/gi, ' en ')
+            .replace(/\s+del\s+del\s+/gi, ' del ');
+
+        // Regla estricta: Coma antes del año y prohibición absoluta de punto final
+        let tituloFinal = `${estructuraBase}, ${anio}`.replace(/\.+$/, '').replace(/\s+/g, ' ');
+        tituloFinal = tituloFinal.charAt(0).toUpperCase() + tituloFinal.slice(1);
+
+        document.getElementById('title-output').textContent = tituloFinal;
+
+        const palabras = tituloFinal.split(/\s+/).length;
+        document.getElementById('word-count').textContent = `Extensión: ${palabras} palabras (Recomendado estándar APA: 12 a 20 palabras).`;
+
+        document.getElementById('result-box').style.display = 'block';
+    }
+
+    function copiarTitulo() {
+        const titulo = document.getElementById('title-output').textContent;
+        if (!titulo) {
+            alert("Primero genera un título.");
+            return;
+        }
+        navigator.clipboard.writeText(titulo).then(() => {
+            alert("¡Título copiado al portapapeles sin punto final!");
+        });
+    }
+
+    window.onload = function() {
+        cambiarTipoEstudio();
+    };
+</script>
+
+</body>
+</html>
